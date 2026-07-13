@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>WhatsApp Preview Sender</title>
+<script src="https://live.zwidgets.com/js-sdk-library/1.2/ZohoEmbededAppSDK.min.js"></script>
+<style>
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: #ffffff;
+    color: #26221f;
+    font-size: 14px;
+  }
+  .row { margin-bottom: 14px; }
+  .label { font-size: 12px; color: #6b6a67; margin-bottom: 4px; display: block; }
+  .value { font-size: 14px; }
+  select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d6d4d0;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+  .preview-box {
+    background: #f7f6f4;
+    border: 1px solid #e2e0dc;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    min-height: 60px;
+  }
+  .btn-row { margin-top: 18px; display: flex; gap: 10px; }
+  button {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid #d6d4d0;
+    background: #ffffff;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button.primary {
+    background: #128c7e;
+    color: #ffffff;
+    border-color: #128c7e;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .status { margin-top: 12px; font-size: 13px; }
+  .status.success { color: #2e7d32; }
+  .status.error { color: #c62828; }
+  .header { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+  hr { border: none; border-top: 1px solid #eeece9; margin: 14px 0; }
+</style>
+</head>
+<body>
+
+<div class="header">Send WhatsApp message</div>
+
+<div class="row">
+  <span class="label">Lead / Institution</span>
+  <span class="value" id="lead-name">Loading...</span>
+</div>
+<div class="row">
+  <span class="label">Phone</span>
+  <span class="value" id="lead-phone">Loading...</span>
+</div>
+
+<hr>
+
+<div class="row">
+  <span class="label">Template</span>
+  <select id="template-select"></select>
+</div>
+
+<div class="row">
+  <span class="label">Preview</span>
+  <div class="preview-box" id="preview-box">Select a template above to preview the message.</div>
+</div>
+
+<div class="btn-row">
+  <button id="cancel-btn">Cancel</button>
+  <button id="send-btn" class="primary">Send message</button>
+</div>
+
+<div class="status" id="status-msg"></div>
+
+<script>
+
+/* ===================== CONFIG — edit these to match your CRM setup ===================== */
+var CONFIG = {
+  currentModule: "MQL",                       // change to "Raw_Data" when reusing this widget on that module
+  templatesModule: "WhatsApp_Templates",       // API name of your templates custom module
+  fields: {
+    name: "Name",                              // MQL field holding institution/lead name
+    phone: "Phone",                            // MQL field holding phone number
+    sector: "Sector"                           // any field you want available as a {{placeholder}}
+  },
+  templateFields: {
+    templateName: "Template_Name",
+    templateBody: "Template_Body",
+    isActive: "Is_Active"
+  },
+  functionName: "send_whatsapp_mql"            // Deluge function API name to call on Send
+};
+/* ========================================================================================= */
+
+var recordId = null;
+var recordData = {};
+var templates = [];
+
+ZOHO.embeddedApp.on("PageLoad", function (data) {
+  recordId = data.EntityId;
+
+  ZOHO.CRM.API.getRecord({ Entity: CONFIG.currentModule, RecordID: recordId }).then(function (resp) {
+    var rec = resp.data[0];
+    recordData = rec;
+    document.getElementById("lead-name").innerText = rec[CONFIG.fields.name] || "-";
+    document.getElementById("lead-phone").innerText = rec[CONFIG.fields.phone] || "-";
+  }).catch(function (err) {
+    document.getElementById("lead-name").innerText = "Could not load record";
+    console.error(err);
+  });
+
+  ZOHO.CRM.API.getAllRecords({
+    Entity: CONFIG.templatesModule,
+    sort_order: "asc",
+    per_page: 200,
+    page: 1
+  }).then(function (resp) {
+    if (!resp.data) return;
+    templates = resp.data.filter(function (t) {
+      return t[CONFIG.templateFields.isActive] === true;
+    });
+    var select = document.getElementById("template-select");
+    select.innerHTML = "<option value=''>Select a template</option>";
+    templates.forEach(function (t, idx) {
+      var opt = document.createElement("option");
+      opt.value = idx;
+      opt.innerText = t[CONFIG.templateFields.templateName];
+      select.appendChild(opt);
+    });
+  }).catch(function (err) {
+    console.error(err);
+  });
+});
+
+ZOHO.embeddedApp.init();
+
+function renderPreview() {
+  var select = document.getElementById("template-select");
+  var idx = select.value;
+  var box = document.getElementById("preview-box");
+
+  if (idx === "") {
+    box.innerText = "Select a template above to preview the message.";
+    return;
+  }
+
+  var body = templates[idx][CONFIG.templateFields.templateBody] || "";
+
+  Object.keys(CONFIG.fields).forEach(function (key) {
+    var fieldApiName = CONFIG.fields[key];
+    var val = recordData[fieldApiName] || "";
+    var placeholder = new RegExp("{{" + key + "}}", "g");
+    body = body.replace(placeholder, val);
+  });
+
+  box.innerText = body;
+}
+
+document.getElementById("template-select").addEventListener("change", renderPreview);
+
+document.getElementById("cancel-btn").addEventListener("click", function () {
+  ZOHO.CRM.UI.Popup.closeReload();
+});
+
+document.getElementById("send-btn").addEventListener("click", function () {
+  var select = document.getElementById("template-select");
+  var idx = select.value;
+  var statusEl = document.getElementById("status-msg");
+
+  if (idx === "") {
+    statusEl.className = "status error";
+    statusEl.innerText = "Please select a template first.";
+    return;
+  }
+
+  var templateName = templates[idx][CONFIG.templateFields.templateName];
+  var finalMessage = document.getElementById("preview-box").innerText;
+  var phone = recordData[CONFIG.fields.phone];
+
+  document.getElementById("send-btn").disabled = true;
+  statusEl.className = "status";
+  statusEl.innerText = "Sending...";
+
+  var funcParams = {
+    recordId: recordId,
+    phone: phone,
+    templateName: templateName,
+    message: finalMessage
+  };
+
+  ZOHO.CRM.FUNCTIONS.execute(CONFIG.functionName, { arguments: funcParams })
+    .then(function (resp) {
+      statusEl.className = "status success";
+      statusEl.innerText = "Message sent.";
+      setTimeout(function () {
+        ZOHO.CRM.UI.Popup.closeReload();
+      }, 1200);
+    }).catch(function (err) {
+      statusEl.className = "status error";
+      statusEl.innerText = "Failed to send. Check the function logs.";
+      document.getElementById("send-btn").disabled = false;
+      console.error(err);
+    });
+});
+
+</script>
+
+</body>
+</html>
