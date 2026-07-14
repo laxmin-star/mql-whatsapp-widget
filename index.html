@@ -94,7 +94,7 @@
 
 /* ===================== CONFIG — edit these to match your CRM setup ===================== */
 var CONFIG = {
-  currentModule: "MQL",                       // change to "Raw_Data" when reusing this widget on that module
+  currentModule: "MQL",                       // ⚠️ VERIFY this matches Setup → Modules and Fields → MQL → API Name exactly (could be "CustomModule7" or similar auto-generated name)
   templatesModule: "WhatsApp_Templates",       // API name of your templates custom module
   fields: {
     name: "Name",                              // MQL field holding institution/lead name
@@ -127,7 +127,7 @@ ZOHO.embeddedApp.on("PageLoad", function (data) {
     console.error(err);
   });
 
-  ZOHO.CRM.API.getAllRecords({
+  ZOHO.CRM.API.getRecords({
     Entity: CONFIG.templatesModule,
     sort_order: "asc",
     per_page: 200,
