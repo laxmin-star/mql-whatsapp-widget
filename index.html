@@ -95,15 +95,15 @@
 
 /* ===================== CONFIG — edit these to match your CRM setup ===================== */
 var CONFIG = {
-  currentModule: "CustomModule7",             // ✅ confirmed actual API name for the MQL module
+  currentModule: "Marketing_Qualified_Leads", // ✅ confirmed via API — the real API name (URL shows CustomModule7, but that's just the internal tab id, not the API name)
   templatesModule: "WhatsApp_Templates",       // API name of your templates custom module
   fields: {
     name: "Name",                              // MQL field holding institution/lead name
     phone: "Phone",                            // MQL field holding phone number
-    sector: "Sector"                           // any field you want available as a {{placeholder}}
+    sector: "Sector_Industry"                  // ✅ confirmed via API
   },
   templateFields: {
-    templateName: "Template_Name",
+    templateName: "Name",                      // ✅ confirmed via API — Zoho's standard Name field, relabeled "Template Name" in the UI
     templateBody: "Template_Body",
     isActive: "Is_Active"
   },
