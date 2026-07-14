@@ -128,7 +128,7 @@ ZOHO.embeddedApp.on("PageLoad", function (data) {
     console.error(err);
   });
 
-  ZOHO.CRM.API.getRecords({
+  ZOHO.CRM.API.getAllRecords({
     Entity: CONFIG.templatesModule,
     sort_order: "asc",
     per_page: 200,
@@ -136,7 +136,8 @@ ZOHO.embeddedApp.on("PageLoad", function (data) {
   }).then(function (resp) {
     if (!resp.data) return;
     templates = resp.data.filter(function (t) {
-      return t[CONFIG.templateFields.isActive] === true;
+      var v = t[CONFIG.templateFields.isActive];
+      return v === true || v === "true";
     });
     var select = document.getElementById("template-select");
     select.innerHTML = "<option value=''>Select a template</option>";
