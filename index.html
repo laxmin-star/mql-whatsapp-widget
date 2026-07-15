@@ -208,7 +208,7 @@ document.getElementById("send-btn").addEventListener("click", function () {
     message: finalMessage
   };
 
-  ZOHO.CRM.FUNCTIONS.execute(CONFIG.functionName, funcParams)
+  ZOHO.CRM.FUNCTIONS.execute(CONFIG.functionName, { arguments: JSON.stringify(funcParams) })
     .then(function (resp) {
       statusEl.className = "status success";
       statusEl.innerText = "Message sent.";
