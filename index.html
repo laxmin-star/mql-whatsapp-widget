@@ -115,7 +115,7 @@ var recordData = {};
 var templates = [];
 
 ZOHO.embeddedApp.on("PageLoad", function (data) {
-  recordId = data.EntityId;
+  recordId = Array.isArray(data.EntityId) ? data.EntityId[0] : data.EntityId;
 
   ZOHO.CRM.API.getRecord({ Entity: CONFIG.currentModule, RecordID: recordId }).then(function (resp) {
     var rec = resp.data[0];
