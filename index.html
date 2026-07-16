@@ -211,10 +211,7 @@ document.getElementById("send-btn").addEventListener("click", function () {
   ZOHO.CRM.FUNCTIONS.execute(CONFIG.functionName, { arguments: JSON.stringify(funcParams) })
     .then(function (resp) {
       statusEl.className = "status success";
-      statusEl.innerText = "Message sent.";
-      setTimeout(function () {
-        ZOHO.CRM.UI.Popup.closeReload();
-      }, 1200);
+      statusEl.innerText = "Response: " + JSON.stringify(resp);
     }).catch(function (err) {
       statusEl.className = "status error";
       statusEl.innerText = "Failed to send. Check the function logs.";
