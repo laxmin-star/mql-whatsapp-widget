@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -115,6 +116,7 @@ var recordData = {};
 var templates = [];
 
 ZOHO.embeddedApp.on("PageLoad", function (data) {
+  // Buttons fire EntityId as an array (even for a single record); RelatedList fires it as a plain string.
   recordId = Array.isArray(data.EntityId) ? data.EntityId[0] : data.EntityId;
 
   ZOHO.CRM.API.getRecord({ Entity: CONFIG.currentModule, RecordID: recordId }).then(function (resp) {
